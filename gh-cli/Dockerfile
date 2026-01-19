@@ -1,4 +1,4 @@
-FROM alpine:3.23.2
+FROM docker.io/alpine:3.23.2
 
 RUN apk add --no-cache curl && cd /tmp && \
     curl -L https://github.com/cli/cli/releases/download/v2.85.0/gh_2.85.0_linux_amd64.tar.gz -o gh_2.85.0_linux_amd64.tar.gz && \
