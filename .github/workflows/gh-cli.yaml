@@ -6,10 +6,6 @@ on:
     paths:
       - 'gh-cli/**'
 
-defaults:
-  run:
-    working-directory: ./gh-cli
-
 jobs:
   deploy:
     name: Deploy
@@ -17,6 +13,10 @@ jobs:
     permissions:
       contents: read
       packages: write
+
+    defaults:
+      run:
+        working-directory: gh-cli
 
     steps:
       - uses: actions/checkout@v4
