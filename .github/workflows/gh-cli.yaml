@@ -25,7 +25,7 @@ jobs:
         with:
           images: ghcr.io/blackcowmoo/gh-cli
           tags: |
-            type=sha,format=long
+            type=raw,value={{commit_date 'YYYYMMDD'}}-{{sha}}
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v1
