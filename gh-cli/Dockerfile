@@ -6,4 +6,3 @@ RUN apk add --no-cache curl && cd /tmp && \
     mv gh_2.85.0_linux_amd64/bin/gh /usr/local/bin/gh && \
     chmod +x /usr/local/bin/gh && \
     rm -rf gh_2.85.0_linux_amd64.tar.gz gh_2.85.0_linux_amd64 /var/cache/apk/*
-
