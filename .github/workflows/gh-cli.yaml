@@ -14,10 +14,6 @@ jobs:
       contents: read
       packages: write
 
-    defaults:
-      run:
-        working-directory: gh-cli
-
     steps:
       - uses: actions/checkout@v4
         with:
@@ -45,7 +41,7 @@ jobs:
         uses: docker/build-push-action@v2
         id: docker_build
         with:
-          context: .
+          context: gh-cli
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
