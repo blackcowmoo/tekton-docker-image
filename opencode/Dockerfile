@@ -1,3 +1,3 @@
-FROM ghcr.io/anomalyco/opencode:1.2.20
+FROM ghcr.io/anomalyco/opencode:1.2.26
 
-RUN apk add git jq
+RUN apk add git jq python3
