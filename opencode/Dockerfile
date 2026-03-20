@@ -11,6 +11,6 @@ RUN apt update -y && \
     mv /root/.local/bin/uv /usr/bin/uv && \
     mv /root/.local/bin/uvx /usr/bin/uvx && \
     wget https://github.com/anomalyco/opencode/releases/download/${OPENCODE_VERSION}/opencode-linux-x64.tar.gz && \
-    tar xf opencode-linux-x64.tar.gz && rm -rf opencode-linux-x64.tar.gz \
+    tar xf opencode-linux-x64.tar.gz && rm -rf opencode-linux-x64.tar.gz && \
     mv opencode /usr/bin/opencode && \
     rm -rf /var/lib/apt/lists/*
