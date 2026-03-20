@@ -8,5 +8,5 @@ RUN apt update -y && \
     apt install -y git jq python3 curl coreutils procps && \
     curl -LsSf https://astral.sh/uv/install.sh | sh && \
     mv /root/.local/bin/uv /usr/local/bin/uv && \
-    mv /root/.local/bin/uvx /usr/local/bin/uvx &&
+    mv /root/.local/bin/uvx /usr/local/bin/uvx && \
     rm -rf /var/lib/apt/lists/*
