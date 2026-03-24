@@ -14,5 +14,5 @@ RUN apt update -y && \
     tar xf opencode-linux-x64.tar.gz && rm -rf opencode-linux-x64.tar.gz && \
     mv opencode /usr/bin/opencode && \
     curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.1/install.sh | bash && \
-    bash -c "nvm install 24" && \
+    export NVM_DIR="$HOME/.nvm" && . "$NVM_DIR/nvm.sh" && nvm install 24 && \
     rm -rf /var/lib/apt/lists/*
