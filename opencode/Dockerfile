@@ -13,4 +13,6 @@ RUN apt update -y && \
     wget https://github.com/anomalyco/opencode/releases/download/${OPENCODE_VERSION}/opencode-linux-x64.tar.gz && \
     tar xf opencode-linux-x64.tar.gz && rm -rf opencode-linux-x64.tar.gz && \
     mv opencode /usr/bin/opencode && \
+    curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.1/install.sh | bash && \
+    source $HOME/.bashrc && nvm install 24 && \
     rm -rf /var/lib/apt/lists/*
