@@ -13,6 +13,6 @@ RUN apt update -y && \
     wget https://github.com/anomalyco/opencode/releases/download/${OPENCODE_VERSION}/opencode-linux-x64.tar.gz && \
     tar xf opencode-linux-x64.tar.gz && rm -rf opencode-linux-x64.tar.gz && \
     mv opencode /usr/bin/opencode && \
-    curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.1/install.sh | bash && \
-    export NVM_DIR="$HOME/.nvm" && . "$NVM_DIR/nvm.sh" && nvm install 24 && \
+    curl -fsSL https://deb.nodesource.com/setup_24.x | bash - && \
+    apt update -y && apt install -y nodejs && \
     rm -rf /var/lib/apt/lists/*
