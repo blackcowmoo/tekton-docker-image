@@ -15,4 +15,6 @@ RUN apt update -y && \
     mv opencode /usr/bin/opencode && \
     curl -fsSL https://deb.nodesource.com/setup_24.x | bash - && \
     apt update -y && apt install -y nodejs && \
+    curl -L https://github.com/rust-lang/rust-analyzer/releases/latest/download/rust-analyzer-x86_64-unknown-linux-gnu.gz | gunzip -c - > /usr/local/bin/rust-analyzer && \
+    chmod +x /usr/local/bin/rust-analyzer && \
     rm -rf /var/lib/apt/lists/*
