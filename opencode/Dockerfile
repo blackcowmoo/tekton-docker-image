@@ -17,4 +17,6 @@ RUN apt update -y && \
     apt update -y && apt install -y nodejs && \
     curl -L https://github.com/rust-lang/rust-analyzer/releases/latest/download/rust-analyzer-x86_64-unknown-linux-gnu.gz | gunzip -c - > /usr/local/bin/rust-analyzer && \
     chmod +x /usr/local/bin/rust-analyzer && \
+    curl https://sh.rustup.rs -sSf | sh -s -- -y && \
+    ln -sf /root/.cargo/bin/cargo /usr/bin/cargo && \
     rm -rf /var/lib/apt/lists/*
