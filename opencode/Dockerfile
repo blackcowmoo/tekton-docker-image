@@ -6,7 +6,7 @@ WORKDIR /tmp
 
 USER root
 RUN apt update -y && \
-    apt install -y git jq python3 curl coreutils procps wget && \
+    apt install -y git jq python3 curl coreutils procps wget build-essential && \
     curl -LsSf https://astral.sh/uv/install.sh | sh && \
     mv /root/.local/bin/uv /usr/bin/uv && \
     mv /root/.local/bin/uvx /usr/bin/uvx && \
