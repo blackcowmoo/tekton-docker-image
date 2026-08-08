@@ -117,3 +117,37 @@ jobs:
             echo "- Tags: \`${{ steps.meta.outputs.tags }}\`"
             echo "- Digest: \`${{ steps.docker-build.outputs.digest }}\`"
           } >> "$GITHUB_STEP_SUMMARY"
+
+  docker-build-status:
+    name: Docker build status
+    if: always()
+    needs:
+      - changed-directories
+      - build-and-push
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check matrix result
+        env:
+          CHANGED_RESULT: ${{ needs.changed-directories.result }}
+          BUILD_RESULT: ${{ needs.build-and-push.result }}
+          IMAGE_MATRIX: ${{ needs.changed-directories.outputs.matrix }}
+        run: |
+          set -euo pipefail
+
+          if [[ "$CHANGED_RESULT" != "success" ]]; then
+            echo "Failed to determine changed image directories."
+            exit 1
+          fi
+
+          # An empty matrix correctly skips build-and-push and still passes.
+          if [[ "$IMAGE_MATRIX" == "[]" && "$BUILD_RESULT" == "skipped" ]]; then
+            echo "No Docker image directories changed."
+            exit 0
+          fi
+
+          if [[ "$BUILD_RESULT" != "success" ]]; then
+            echo "At least one Docker image build failed."
+            exit 1
+          fi
+
+          echo "All Docker image builds passed."
