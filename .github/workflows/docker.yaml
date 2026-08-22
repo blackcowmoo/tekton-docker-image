@@ -1,0 +1,153 @@
+name: Build and push Docker images
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  changed-directories:
+    name: Find changed images
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.changed.outputs.matrix }}
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Build image matrix
+        id: changed
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          BEFORE_SHA: ${{ github.event.before }}
+          AFTER_SHA: ${{ github.sha }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          # Only directories containing a Dockerfile are image roots. This keeps
+          # unrelated top-level directories from becoming matrix entries.
+          mapfile -t image_roots < <(find . -mindepth 2 -maxdepth 2 -type f -name Dockerfile -printf '%h\n' | sed 's#^./##' | sort)
+
+          if [[ "$EVENT_NAME" == "pull_request" ]]; then
+            changed_files=$(git diff --name-only "$BASE_SHA...$HEAD_SHA")
+          elif [[ "$BEFORE_SHA" == "0000000000000000000000000000000000000000" ]]; then
+            changed_files=$(git ls-tree -r --name-only "$AFTER_SHA")
+          else
+            changed_files=$(git diff --name-only "$BEFORE_SHA" "$AFTER_SHA")
+          fi
+
+          matrix='[]'
+          for directory in "${image_roots[@]}"; do
+            if grep -qE "^${directory}(/|$)" <<< "$changed_files"; then
+              matrix=$(jq -c --arg directory "$directory" \
+                '. + [{directory: $directory, image: ("ghcr.io/blackcowmoo/" + $directory)}]' \
+                <<< "$matrix")
+            fi
+          done
+
+          echo "matrix=$matrix" >> "$GITHUB_OUTPUT"
+          echo "Building images: $matrix"
+
+  build-and-push:
+    name: Build and push ${{ matrix.image.directory }}
+    needs: changed-directories
+    if: needs.changed-directories.outputs.matrix != '[]'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    strategy:
+      fail-fast: false
+      matrix:
+        image: ${{ fromJSON(needs.changed-directories.outputs.matrix) }}
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Set build date
+        run: echo "BUILD_DATE=$(date +'%Y%m%d')" >> "$GITHUB_ENV"
+
+      - name: Log in to GitHub Container Registry
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Docker metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ matrix.image.image }}
+          tags: |
+            type=raw,value=${{ env.BUILD_DATE }}-{{ sha }}
+
+      - name: Build image
+        id: docker-build
+        uses: docker/build-push-action@v6
+        with:
+          context: ${{ matrix.image.directory }}
+          file: ${{ matrix.image.directory }}/Dockerfile
+          push: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha,scope=${{ matrix.image.directory }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.image.directory }}
+
+      - name: Add build metrics to summary
+        run: |
+          {
+            echo "### ${{ matrix.image.image }}"
+            echo "- Tags: \`${{ steps.meta.outputs.tags }}\`"
+            echo "- Digest: \`${{ steps.docker-build.outputs.digest }}\`"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  docker-build-status:
+    name: Docker build status
+    if: always()
+    needs:
+      - changed-directories
+      - build-and-push
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check matrix result
+        env:
+          CHANGED_RESULT: ${{ needs.changed-directories.result }}
+          BUILD_RESULT: ${{ needs.build-and-push.result }}
+          IMAGE_MATRIX: ${{ needs.changed-directories.outputs.matrix }}
+        run: |
+          set -euo pipefail
+
+          if [[ "$CHANGED_RESULT" != "success" ]]; then
+            echo "Failed to determine changed image directories."
+            exit 1
+          fi
+
+          # An empty matrix correctly skips build-and-push and still passes.
+          if [[ "$IMAGE_MATRIX" == "[]" && "$BUILD_RESULT" == "skipped" ]]; then
+            echo "No Docker image directories changed."
+            exit 0
+          fi
+
+          if [[ "$BUILD_RESULT" != "success" ]]; then
+            echo "At least one Docker image build failed."
+            exit 1
+          fi
+
+          echo "All Docker image builds passed."
